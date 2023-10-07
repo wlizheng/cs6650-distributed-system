@@ -30,8 +30,6 @@ public class AlbumClient {
             int statusCode = response.getStatusLine().getStatusCode();
             HttpEntity entity = response.getEntity();
             String responseBody = EntityUtils.toString(entity);
-//            System.out.println("GET Request Status Code: " + statusCode);
-//            System.out.println("GET Response Body: " + responseBody);
             return statusCode;
         } catch (IOException e) {
             e.printStackTrace();
@@ -56,8 +54,6 @@ public class AlbumClient {
             int statusCode = response.getStatusLine().getStatusCode();
             HttpEntity entity = response.getEntity();
             String responseBody = EntityUtils.toString(entity);
-//            System.out.println("POST Request Status Code: " + statusCode);
-//            System.out.println("POST Response Body: " + responseBody);
             return statusCode;
         } catch (IOException e) {
             e.printStackTrace();
