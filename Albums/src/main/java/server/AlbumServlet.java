@@ -5,17 +5,26 @@ import javax.servlet.http.*;
 import javax.servlet.annotation.*;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.UUID;
 
 import com.google.gson.Gson;
+import database.AlbumDao;
+import database.DatabaseConnection;
 
 @WebServlet(name = "server.AlbumServlet", value = "/albums/*")
 @MultipartConfig
 public class AlbumServlet extends HttpServlet {
     private final Gson gson = new Gson();
+    protected AlbumDao albumDao;
 
     @Override
-    protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+    public void init() throws ServletException {
+        super.init();
+        albumDao = new AlbumDao(DatabaseConnection.getDataSource());
+    }
+
+    @Override
+    protected void doGet(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
         response.setContentType("application/json");
         response.setCharacterEncoding("UTF-8");
         String urlPath = request.getPathInfo();
@@ -32,8 +41,9 @@ public class AlbumServlet extends HttpServlet {
         }
 
         String albumID = urlParts[1];
-        if (albumID.equals("1")) {
-            Profile profile = new Profile("Sex Pistols", "Never Mind The Bollocks!", "1977");
+        Profile profile = albumDao.getAlbum(albumID);
+
+        if (profile != null) {
             sendJsonResponse(response, HttpServletResponse.SC_OK, profile);
         } else {
             sendErrorResponse(response, HttpServletResponse.SC_NOT_FOUND, "Key not found");
@@ -46,14 +56,13 @@ public class AlbumServlet extends HttpServlet {
         response.setCharacterEncoding("UTF-8");
 
         Part imagePart = request.getPart("image");
-        String artist = request.getParameter("artist");
-        String title = request.getParameter("title");
-        String year = request.getParameter("year");
+        String profileJson = request.getParameter("profile");
 
-        if (imagePart != null && artist != null && title != null && year != null) {
-            String imageSize = String.valueOf(imagePart.getSize());
+        if (imagePart != null && profileJson != null) {
+            byte[] imageBytes = imagePart.getInputStream().readAllBytes();
+            Profile profile = gson.fromJson(profileJson, Profile.class);
 
-            ImageMetaData imageMetaData = new ImageMetaData("1", imageSize);
+            ImageMetaData imageMetaData = albumDao.createAlbum(profile, imageBytes);
             sendJsonResponse(response, HttpServletResponse.SC_CREATED, imageMetaData);
         } else {
             sendErrorResponse(response, HttpServletResponse.SC_BAD_REQUEST, "Invalid request");
@@ -72,9 +81,5 @@ public class AlbumServlet extends HttpServlet {
         response.setStatus(statusCode);
         ErrorMsg errorMsg = new ErrorMsg(errorMessage);
         sendJsonResponse(response, statusCode, errorMsg);
-    }
-
-    private String generateAlbumID() {
-        return UUID.randomUUID().toString();
     }
 }

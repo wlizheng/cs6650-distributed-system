@@ -1,64 +1,40 @@
 package client;
 
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpResponse;
+import database.AlbumDao;
 import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.entity.ContentType;
-import org.apache.http.entity.mime.MultipartEntityBuilder;
-import org.apache.http.impl.client.HttpClients;
-import org.apache.http.util.EntityUtils;
+import server.ImageMetaData;
+import server.Profile;
 
 import java.io.File;
-import java.io.IOException;
+import java.nio.file.Files;
 
 public class AlbumClient {
     private final HttpClient httpClient;
     private final String baseUrl;
-    public AlbumClient(HttpClient httpClient, String baseUrl) {
+    protected AlbumDao albumDao;
+
+    public AlbumClient(HttpClient httpClient, AlbumDao albumDao, String baseUrl) {
         this.httpClient = httpClient;
         this.baseUrl = baseUrl;
+        this.albumDao = albumDao;
     }
 
-    public int getAlbum(String albumId) {
+    public Profile getAlbum(String albumId) {
         try {
-            String url = baseUrl + "/" + albumId;
-            HttpGet httpGet = new HttpGet(url);
-
-            HttpResponse response = httpClient.execute(httpGet);
-            int statusCode = response.getStatusLine().getStatusCode();
-            HttpEntity entity = response.getEntity();
-            String responseBody = EntityUtils.toString(entity);
-            return statusCode;
-        } catch (IOException e) {
+            return albumDao.getAlbum(albumId);
+        } catch (Exception e) {
             e.printStackTrace();
-            return -1;
+            return null;
         }
     }
 
-    public int postAlbum(String artist, String title, String year, File imageFile) {
+    public ImageMetaData postAlbum(Profile profile, File imageFile) {
         try {
-            HttpPost httpPost = new HttpPost(baseUrl);
-
-            MultipartEntityBuilder builder = MultipartEntityBuilder.create();
-            builder.addBinaryBody("image", imageFile, ContentType.APPLICATION_OCTET_STREAM, imageFile.getName());
-            builder.addTextBody("artist", artist, ContentType.TEXT_PLAIN);
-            builder.addTextBody("title", title, ContentType.TEXT_PLAIN);
-            builder.addTextBody("year", year, ContentType.TEXT_PLAIN);
-
-            HttpEntity multipart = builder.build();
-            httpPost.setEntity(multipart);
-
-            HttpResponse response = httpClient.execute(httpPost);
-            int statusCode = response.getStatusLine().getStatusCode();
-            HttpEntity entity = response.getEntity();
-            String responseBody = EntityUtils.toString(entity);
-            return statusCode;
-        } catch (IOException e) {
+            byte[] imageBytes = Files.readAllBytes(imageFile.toPath());
+            return albumDao.createAlbum(profile, imageBytes);
+        } catch (Exception e) {
             e.printStackTrace();
-            return -1;
+            return null;
         }
     }
-
 }

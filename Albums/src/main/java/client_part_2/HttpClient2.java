@@ -1,14 +1,22 @@
 package client_part_2;
 
 import client.AlbumClient;
+import database.AlbumDao;
+import database.DatabaseConnection;
+import org.apache.http.HttpStatus;
+import org.apache.http.config.SocketConfig;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
+import server.ImageMetaData;
+import server.Profile;
 
+import javax.xml.crypto.Data;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.sql.Connection;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.concurrent.ExecutorService;
@@ -18,7 +26,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.List;
 
 public class HttpClient2 {
-    private static final AtomicInteger totalRequests = new AtomicInteger(0);
+    private static AtomicInteger numOfSuccessfulRequests = new AtomicInteger(0);
+    private static AtomicInteger numOfFailedRequests = new AtomicInteger(0);
     private static final List<RequestRecord> requestRecords = new ArrayList<>();
     private static final int NUM_OF_ARGS = 4;
     private static final int MAX_RETRY_ATTEMPTS = 5;
@@ -33,10 +42,23 @@ public class HttpClient2 {
             System.exit(1);
         }
 
+        int socketTimeout = 3600000;
+        SocketConfig socketConfig = SocketConfig.custom()
+                .setTcpNoDelay(true)
+                .setSoKeepAlive(true)
+                .setSoTimeout(socketTimeout)
+                .build();
+
         PoolingHttpClientConnectionManager manager = new PoolingHttpClientConnectionManager();
-        manager.setDefaultMaxPerRoute(50);
-        manager.setMaxTotal(50);
-        CloseableHttpClient httpClient = HttpClients.custom().setConnectionManager(manager).build();
+        manager.setDefaultMaxPerRoute(200);
+        manager.setMaxTotal(200);
+        manager.setValidateAfterInactivity(-1);
+        manager.setDefaultSocketConfig(socketConfig);
+        CloseableHttpClient httpClient = HttpClients.custom()
+                .disableAutomaticRetries()
+                .setConnectionManager(manager)
+                .disableRedirectHandling()
+                .build();
 
         int threadGroupSize = Integer.parseInt(args[0]);
         int numThreadGroups = Integer.parseInt(args[1]);
@@ -44,19 +66,25 @@ public class HttpClient2 {
         String IPAddr = args[3];
 
         ExecutorService executor = Executors.newFixedThreadPool(INITIAL_THREAD_SIZE);
-        AlbumClient albumClient = new AlbumClient(httpClient, IPAddr);
+//        AlbumDao albumDao = AlbumDao.getInstance();
+        AlbumDao albumDao = new AlbumDao(DatabaseConnection.getDataSource());
+        AlbumClient albumClient = new AlbumClient(httpClient, albumDao, IPAddr);
+        Profile profile = new Profile("Sex Pistols", "Never Mind The Bollocks!", "1977");
         File imageFile = new File("images/nmtb.png");
 
         // initial 10 threads
         for (int i = 0; i < INITIAL_THREAD_SIZE; i++) {
             executor.execute(() -> {
                 for (int j = 0; j < INITIAL_REQUEST_LOOP; j++) {
-                    performRequests("POST", albumClient, imageFile);
-                    performRequests("GET", albumClient, imageFile);
+                    performRequests("POST", albumClient, imageFile, profile);
+                    performRequests("GET", albumClient, imageFile, profile);
                 }
             });
         }
         waitForCompleted(executor);
+
+        numOfSuccessfulRequests = new AtomicInteger(0);
+        numOfFailedRequests = new AtomicInteger(0);
 
         // additional threads groups
         long startTime = System.currentTimeMillis();
@@ -65,8 +93,8 @@ public class HttpClient2 {
             for (int i = 0; i < threadGroupSize; i++) {
                 executor.execute(() -> {
                     for (int j = 0; j < ADDITIONAL_REQUEST_LOOP; j++) {
-                        totalRequests.addAndGet(performRequests("POST", albumClient, imageFile));
-                        totalRequests.addAndGet(performRequests("GET", albumClient, imageFile));
+                        performRequests("POST", albumClient, imageFile, profile);
+                        performRequests("GET", albumClient, imageFile, profile);
                     }
                 });
             }
@@ -82,16 +110,18 @@ public class HttpClient2 {
 
         long endTime = System.currentTimeMillis();
         long wallTime = (endTime - startTime) / 1000;
-        double throughput = (double) totalRequests.get() / wallTime;
+        double throughput = (double) numOfSuccessfulRequests.get() / wallTime;
 
         writeToCSV("records.csv");
 
         System.out.println("\nWall Time: " + wallTime + " seconds");
+        System.out.println("Num of successful requests: " + numOfSuccessfulRequests);
+        System.out.println("Num of failed requests: " + numOfFailedRequests);
         System.out.println("Throughput: " + throughput + " requests per second");
         calculateAndDisplayStatistics();
     }
 
-    public static int performRequests(String requestType, AlbumClient albumClient, File imageFile) {
+    public static void performRequests(String requestType, AlbumClient albumClient, File imageFile, Profile profile) {
         boolean requestSuccessful = false;
         int retryCount = 1;
         int statusCode = -1;
@@ -100,11 +130,22 @@ public class HttpClient2 {
         while (!requestSuccessful && retryCount < MAX_RETRY_ATTEMPTS) {
             try {
                 if ("GET".equals(requestType)) {
-                    statusCode = albumClient.getAlbum("1");
+                    Profile retrievedProfile = albumClient.getAlbum("1");
+                    if (retrievedProfile != null) {
+                        statusCode = HttpStatus.SC_OK;
+                    } else {
+                        statusCode = HttpStatus.SC_BAD_REQUEST;
+                    }
                 } else if ("POST".equals(requestType)) {
-                    statusCode = albumClient.postAlbum("Sex Pistols", "Never Mind The Bollocks!", "1977", imageFile);
+                    ImageMetaData imageMetaData = albumClient.postAlbum(profile, imageFile);
+                    if (imageMetaData != null) {
+                        statusCode = HttpStatus.SC_CREATED;
+                    } else {
+                        statusCode = HttpStatus.SC_BAD_REQUEST;
+                    }
                 }
                 requestSuccessful = true;
+                numOfSuccessfulRequests.incrementAndGet();
 
                 long end = System.currentTimeMillis();
                 long latency = end - start;
@@ -112,10 +153,10 @@ public class HttpClient2 {
                 requestRecords.add(new RequestRecord(start, requestType, latency, statusCode));
             } catch (Exception e) {
                 e.printStackTrace();
+                numOfFailedRequests.incrementAndGet();
                 retryCount++;
             }
         }
-        return retryCount;
     }
 
     public static void writeToCSV(String fileName) {
