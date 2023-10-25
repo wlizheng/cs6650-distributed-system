@@ -4,7 +4,7 @@
 //import org.apache.http.impl.client.CloseableHttpClient;
 //import org.apache.http.impl.client.HttpClients;
 //import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
-//import server.Profile;
+//import service_interface.Profile;
 //
 //import java.io.File;
 //import java.util.concurrent.ExecutorService;

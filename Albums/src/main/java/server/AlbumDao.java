@@ -1,13 +1,13 @@
-package database;
+package server;
 
 import com.zaxxer.hikari.HikariDataSource;
-import server.ImageMetaData;
-import server.Profile;
+import service_interface.ImageMetaData;
+import service_interface.Profile;
 
 import java.sql.*;
 
 public class AlbumDao {
-    private HikariDataSource dataSource;
+    private final HikariDataSource dataSource;
 
     public AlbumDao(HikariDataSource dataSource) {
         this.dataSource = dataSource;
@@ -36,13 +36,13 @@ public class AlbumDao {
                     String albumID = resultSet.getString(1);
                     String imageSize = String.valueOf(imageBytes.length);
                     ImageMetaData imageMetaData = new ImageMetaData(albumID, imageSize);
-//                    System.out.println("create: " + (System.currentTimeMillis() - start));
+                    System.out.println("create: " + (System.currentTimeMillis() - start));
 
                     return imageMetaData;
                 }
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            System.err.println(e.getMessage());
         } finally {
             closeResources(connection, preparedStatement, resultSet);
         }
@@ -65,12 +65,12 @@ public class AlbumDao {
                 String artist = resultSet.getString("artist");
                 String title = resultSet.getString("title");
                 String year = resultSet.getString("year");
-//                System.out.println("get: " + (System.currentTimeMillis() - start));
+                System.out.println("get: " + (System.currentTimeMillis() - start));
 
                 return new Profile(artist, title, year);
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            System.err.println(e.getMessage());
         } finally {
             closeResources(connection, preparedStatement, resultSet);
         }
@@ -90,7 +90,8 @@ public class AlbumDao {
                 connection.close();
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            System.err.println(e.getMessage());
         }
     }
 }
+

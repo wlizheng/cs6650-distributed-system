@@ -1,4 +1,4 @@
-package database;
+package server;
 
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
@@ -14,12 +14,11 @@ public class DatabaseConnection {
         config.setJdbcUrl(URL);
         config.setUsername(USERNAME);
         config.setPassword(PASSWORD);
-        config.setMinimumIdle(20);
-        config.setMaximumPoolSize(200);
+        config.setMinimumIdle(50);
+        config.setMaximumPoolSize(300);
         config.setConnectionTimeout(5000);
-        config.setIdleTimeout(300000);
+        config.setIdleTimeout(180000);
         config.setMaxLifetime(1800000);
-
         config.addDataSourceProperty( "cachePrepStmts" , "true" );
         config.addDataSourceProperty( "prepStmtCacheSize" , "250" );
         config.addDataSourceProperty( "prepStmtCacheSqlLimit" , "2048" );

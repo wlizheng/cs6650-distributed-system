@@ -7,24 +7,20 @@ import java.io.IOException;
 import java.io.PrintWriter;
 
 import com.google.gson.Gson;
-import database.AlbumDao;
-import database.DatabaseConnection;
+import service_interface.ErrorMsg;
+import service_interface.ImageMetaData;
+import service_interface.Profile;
 
 @WebServlet(name = "server.AlbumServlet", value = "/albums/*")
 @MultipartConfig
 public class AlbumServlet extends HttpServlet {
     private final Gson gson = new Gson();
-    protected AlbumDao albumDao;
-
-    @Override
-    public void init() throws ServletException {
-        super.init();
-        albumDao = new AlbumDao(DatabaseConnection.getDataSource());
-    }
+    protected AlbumDao albumDao = new AlbumDao(DatabaseConnection.getDataSource());
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
+        long start = System.currentTimeMillis();
         response.setContentType("application/json");
         response.setCharacterEncoding("UTF-8");
         String urlPath = request.getPathInfo();
@@ -45,6 +41,7 @@ public class AlbumServlet extends HttpServlet {
 
         if (profile != null) {
             sendJsonResponse(response, HttpServletResponse.SC_OK, profile);
+            System.out.println("get: " + (System.currentTimeMillis() - start));
         } else {
             sendErrorResponse(response, HttpServletResponse.SC_NOT_FOUND, "Key not found");
         }
@@ -52,6 +49,7 @@ public class AlbumServlet extends HttpServlet {
 
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        long start = System.currentTimeMillis();
         response.setContentType("application/json");
         response.setCharacterEncoding("UTF-8");
 
@@ -64,6 +62,7 @@ public class AlbumServlet extends HttpServlet {
 
             ImageMetaData imageMetaData = albumDao.createAlbum(profile, imageBytes);
             sendJsonResponse(response, HttpServletResponse.SC_CREATED, imageMetaData);
+            System.out.println("post: " + (System.currentTimeMillis() - start));
         } else {
             sendErrorResponse(response, HttpServletResponse.SC_BAD_REQUEST, "Invalid request");
         }
@@ -73,7 +72,7 @@ public class AlbumServlet extends HttpServlet {
         response.setStatus(statusCode);
         String jsonData = this.gson.toJson(data);
         PrintWriter out = response.getWriter();
-        out.print(jsonData);
+        out.write(jsonData);
         out.flush();
     }
 

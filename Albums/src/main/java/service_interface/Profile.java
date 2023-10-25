@@ -1,4 +1,4 @@
-package server;
+package service_interface;
 
 import java.util.*;
 

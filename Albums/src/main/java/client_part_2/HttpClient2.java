@@ -1,22 +1,16 @@
 package client_part_2;
 
 import client.AlbumClient;
-import database.AlbumDao;
-import database.DatabaseConnection;
-import org.apache.http.HttpStatus;
 import org.apache.http.config.SocketConfig;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
-import server.ImageMetaData;
-import server.Profile;
+import service_interface.Profile;
 
-import javax.xml.crypto.Data;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.sql.Connection;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.concurrent.ExecutorService;
@@ -66,13 +60,12 @@ public class HttpClient2 {
         String IPAddr = args[3];
 
         ExecutorService executor = Executors.newFixedThreadPool(INITIAL_THREAD_SIZE);
-//        AlbumDao albumDao = AlbumDao.getInstance();
-        AlbumDao albumDao = new AlbumDao(DatabaseConnection.getDataSource());
-        AlbumClient albumClient = new AlbumClient(httpClient, albumDao, IPAddr);
+        AlbumClient albumClient = new AlbumClient(httpClient, IPAddr);
         Profile profile = new Profile("Sex Pistols", "Never Mind The Bollocks!", "1977");
         File imageFile = new File("images/nmtb.png");
 
         // initial 10 threads
+        System.out.println("initial 10 threads");
         for (int i = 0; i < INITIAL_THREAD_SIZE; i++) {
             executor.execute(() -> {
                 for (int j = 0; j < INITIAL_REQUEST_LOOP; j++) {
@@ -89,6 +82,7 @@ public class HttpClient2 {
         // additional threads groups
         long startTime = System.currentTimeMillis();
         executor = Executors.newFixedThreadPool(threadGroupSize * numThreadGroups);
+        System.out.println("additional threads groups");
         for (int group = 0; group < numThreadGroups; group++) {
             for (int i = 0; i < threadGroupSize; i++) {
                 executor.execute(() -> {
@@ -130,19 +124,9 @@ public class HttpClient2 {
         while (!requestSuccessful && retryCount < MAX_RETRY_ATTEMPTS) {
             try {
                 if ("GET".equals(requestType)) {
-                    Profile retrievedProfile = albumClient.getAlbum("1");
-                    if (retrievedProfile != null) {
-                        statusCode = HttpStatus.SC_OK;
-                    } else {
-                        statusCode = HttpStatus.SC_BAD_REQUEST;
-                    }
+                    statusCode = albumClient.getAlbum("1");
                 } else if ("POST".equals(requestType)) {
-                    ImageMetaData imageMetaData = albumClient.postAlbum(profile, imageFile);
-                    if (imageMetaData != null) {
-                        statusCode = HttpStatus.SC_CREATED;
-                    } else {
-                        statusCode = HttpStatus.SC_BAD_REQUEST;
-                    }
+                    statusCode = albumClient.postAlbum(profile, imageFile);
                 }
                 requestSuccessful = true;
                 numOfSuccessfulRequests.incrementAndGet();

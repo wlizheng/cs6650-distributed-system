@@ -1,4 +1,4 @@
-package server;
+package service_interface;
 
 public class ErrorMsg {
     private String msg;
