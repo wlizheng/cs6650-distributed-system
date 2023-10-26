@@ -14,9 +14,10 @@ public class DatabaseConnection {
         config.setJdbcUrl(URL);
         config.setUsername(USERNAME);
         config.setPassword(PASSWORD);
+        config.setDriverClassName("com.mysql.cj.jdbc.Driver");
         config.setMinimumIdle(50);
-        config.setMaximumPoolSize(300);
-        config.setConnectionTimeout(5000);
+        config.setMaximumPoolSize(1000);
+        config.setConnectionTimeout(180000);
         config.setIdleTimeout(180000);
         config.setMaxLifetime(1800000);
         config.addDataSourceProperty( "cachePrepStmts" , "true" );

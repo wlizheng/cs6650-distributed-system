@@ -1,6 +1,7 @@
 package client_part_2;
 
 import client.AlbumClient;
+import org.apache.http.client.config.RequestConfig;
 import org.apache.http.config.SocketConfig;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
@@ -36,19 +37,19 @@ public class HttpClient2 {
             System.exit(1);
         }
 
-        int socketTimeout = 3600000;
-        SocketConfig socketConfig = SocketConfig.custom()
-                .setTcpNoDelay(true)
-                .setSoKeepAlive(true)
-                .setSoTimeout(socketTimeout)
-                .build();
-
         PoolingHttpClientConnectionManager manager = new PoolingHttpClientConnectionManager();
         manager.setDefaultMaxPerRoute(200);
         manager.setMaxTotal(200);
         manager.setValidateAfterInactivity(-1);
-        manager.setDefaultSocketConfig(socketConfig);
+
+        RequestConfig config = RequestConfig.custom()
+                .setConnectTimeout(3 * 1000)
+                .setConnectionRequestTimeout(3 * 1000)
+                .setSocketTimeout(3 * 1000)
+                .build();
+
         CloseableHttpClient httpClient = HttpClients.custom()
+                .setDefaultRequestConfig(config)
                 .disableAutomaticRetries()
                 .setConnectionManager(manager)
                 .disableRedirectHandling()
@@ -62,10 +63,9 @@ public class HttpClient2 {
         ExecutorService executor = Executors.newFixedThreadPool(INITIAL_THREAD_SIZE);
         AlbumClient albumClient = new AlbumClient(httpClient, IPAddr);
         Profile profile = new Profile("Sex Pistols", "Never Mind The Bollocks!", "1977");
-        File imageFile = new File("images/nmtb.png");
+        File imageFile = new File("images/1x1.png");
 
         // initial 10 threads
-        System.out.println("initial 10 threads");
         for (int i = 0; i < INITIAL_THREAD_SIZE; i++) {
             executor.execute(() -> {
                 for (int j = 0; j < INITIAL_REQUEST_LOOP; j++) {
@@ -82,7 +82,6 @@ public class HttpClient2 {
         // additional threads groups
         long startTime = System.currentTimeMillis();
         executor = Executors.newFixedThreadPool(threadGroupSize * numThreadGroups);
-        System.out.println("additional threads groups");
         for (int group = 0; group < numThreadGroups; group++) {
             for (int i = 0; i < threadGroupSize; i++) {
                 executor.execute(() -> {
@@ -119,10 +118,10 @@ public class HttpClient2 {
         boolean requestSuccessful = false;
         int retryCount = 1;
         int statusCode = -1;
-        long start = System.currentTimeMillis();
 
         while (!requestSuccessful && retryCount < MAX_RETRY_ATTEMPTS) {
             try {
+                long start = System.currentTimeMillis();
                 if ("GET".equals(requestType)) {
                     statusCode = albumClient.getAlbum("1");
                 } else if ("POST".equals(requestType)) {
@@ -136,7 +135,7 @@ public class HttpClient2 {
 
                 requestRecords.add(new RequestRecord(start, requestType, latency, statusCode));
             } catch (Exception e) {
-                e.printStackTrace();
+//                e.printStackTrace();
                 numOfFailedRequests.incrementAndGet();
                 retryCount++;
             }

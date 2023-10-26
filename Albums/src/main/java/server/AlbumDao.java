@@ -36,14 +36,15 @@ public class AlbumDao {
                     String albumID = resultSet.getString(1);
                     String imageSize = String.valueOf(imageBytes.length);
                     ImageMetaData imageMetaData = new ImageMetaData(albumID, imageSize);
-                    System.out.println("create: " + (System.currentTimeMillis() - start));
+//                    System.out.println("create: " + (System.currentTimeMillis() - start));
 
                     return imageMetaData;
                 }
             }
         } catch (SQLException e) {
-            System.err.println(e.getMessage());
-        } finally {
+            e.printStackTrace();
+        }
+        finally {
             closeResources(connection, preparedStatement, resultSet);
         }
         return null;
@@ -65,12 +66,12 @@ public class AlbumDao {
                 String artist = resultSet.getString("artist");
                 String title = resultSet.getString("title");
                 String year = resultSet.getString("year");
-                System.out.println("get: " + (System.currentTimeMillis() - start));
+//                System.out.println("get: " + (System.currentTimeMillis() - start));
 
                 return new Profile(artist, title, year);
             }
         } catch (SQLException e) {
-            System.err.println(e.getMessage());
+            e.printStackTrace();
         } finally {
             closeResources(connection, preparedStatement, resultSet);
         }

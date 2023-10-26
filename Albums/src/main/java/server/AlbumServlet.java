@@ -41,7 +41,7 @@ public class AlbumServlet extends HttpServlet {
 
         if (profile != null) {
             sendJsonResponse(response, HttpServletResponse.SC_OK, profile);
-            System.out.println("get: " + (System.currentTimeMillis() - start));
+//            System.out.println("get: " + (System.currentTimeMillis() - start));
         } else {
             sendErrorResponse(response, HttpServletResponse.SC_NOT_FOUND, "Key not found");
         }
@@ -62,7 +62,7 @@ public class AlbumServlet extends HttpServlet {
 
             ImageMetaData imageMetaData = albumDao.createAlbum(profile, imageBytes);
             sendJsonResponse(response, HttpServletResponse.SC_CREATED, imageMetaData);
-            System.out.println("post: " + (System.currentTimeMillis() - start));
+//            System.out.println("post: " + (System.currentTimeMillis() - start));
         } else {
             sendErrorResponse(response, HttpServletResponse.SC_BAD_REQUEST, "Invalid request");
         }
