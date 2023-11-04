@@ -16,7 +16,7 @@ public class DatabaseConnection {
         config.setPassword(PASSWORD);
         config.setDriverClassName("com.mysql.cj.jdbc.Driver");
         config.setMinimumIdle(50);
-        config.setMaximumPoolSize(1000);
+        config.setMaximumPoolSize(2000);
         config.setConnectionTimeout(180000);
         config.setIdleTimeout(180000);
         config.setMaxLifetime(1800000);

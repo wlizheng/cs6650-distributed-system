@@ -20,7 +20,6 @@ public class AlbumServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        long start = System.currentTimeMillis();
         response.setContentType("application/json");
         response.setCharacterEncoding("UTF-8");
         String urlPath = request.getPathInfo();
@@ -41,15 +40,14 @@ public class AlbumServlet extends HttpServlet {
 
         if (profile != null) {
             sendJsonResponse(response, HttpServletResponse.SC_OK, profile);
-//            System.out.println("get: " + (System.currentTimeMillis() - start));
         } else {
             sendErrorResponse(response, HttpServletResponse.SC_NOT_FOUND, "Key not found");
         }
     }
 
     @Override
-    protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        long start = System.currentTimeMillis();
+    protected void doPost(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
         response.setContentType("application/json");
         response.setCharacterEncoding("UTF-8");
 
@@ -62,7 +60,6 @@ public class AlbumServlet extends HttpServlet {
 
             ImageMetaData imageMetaData = albumDao.createAlbum(profile, imageBytes);
             sendJsonResponse(response, HttpServletResponse.SC_CREATED, imageMetaData);
-//            System.out.println("post: " + (System.currentTimeMillis() - start));
         } else {
             sendErrorResponse(response, HttpServletResponse.SC_BAD_REQUEST, "Invalid request");
         }

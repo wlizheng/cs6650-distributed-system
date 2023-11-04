@@ -12,7 +12,6 @@ import org.apache.http.util.EntityUtils;
 import service_interface.Profile;
 
 import java.io.File;
-import java.io.IOException;
 
 public class AlbumClient {
     private final HttpClient httpClient;
@@ -22,42 +21,42 @@ public class AlbumClient {
         this.baseUrl = baseUrl;
     }
 
-    public int getAlbum(String albumId) throws IOException{
-        long start = System.currentTimeMillis();
-        String url = baseUrl + "/" + albumId;
-        HttpGet httpGet = new HttpGet(url);
-        HttpResponse response = httpClient.execute(httpGet);
-        int statusCode = response.getStatusLine().getStatusCode();
-        HttpEntity entity = response.getEntity();
-        EntityUtils.consume(entity);
-
-//      System.out.println("client get: " + (System.currentTimeMillis() - start));
-
-        return statusCode;
+    public int getAlbum(String albumId) {
+        try {
+            String url = baseUrl + "/" + albumId;
+            HttpGet httpGet = new HttpGet(url);
+            HttpResponse response = httpClient.execute(httpGet);
+            int statusCode = response.getStatusLine().getStatusCode();
+            HttpEntity entity = response.getEntity();
+            EntityUtils.consume(entity);
+            return statusCode;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return -1;
+        }
     }
 
-    public int postAlbum(Profile profile, File imageFile) throws IOException{
-        long start = System.currentTimeMillis();
+    public int postAlbum(Profile profile, File imageFile) {
+        try {
+            HttpPost httpPost = new HttpPost(baseUrl);
+            MultipartEntityBuilder builder = MultipartEntityBuilder.create();
+            builder.addBinaryBody("image", imageFile, ContentType.APPLICATION_OCTET_STREAM, imageFile.getName());
 
-        HttpPost httpPost = new HttpPost(baseUrl);
-        MultipartEntityBuilder builder = MultipartEntityBuilder.create();
-        builder.addBinaryBody("image", imageFile, ContentType.APPLICATION_OCTET_STREAM, imageFile.getName());
+            Gson gson = new Gson();
+            String profileJson = gson.toJson(profile);
+            builder.addTextBody("profile", profileJson, ContentType.APPLICATION_JSON);
 
-        Gson gson = new Gson();
-        String profileJson = gson.toJson(profile);
-        builder.addTextBody("profile", profileJson, ContentType.APPLICATION_JSON);
+            HttpEntity multipart = builder.build();
+            httpPost.setEntity(multipart);
 
-        HttpEntity multipart = builder.build();
-        httpPost.setEntity(multipart);
-
-        HttpResponse response = httpClient.execute(httpPost);
-        int statusCode = response.getStatusLine().getStatusCode();
-        HttpEntity entity = response.getEntity();
-//        String responseBody = EntityUtils.toString(entity);
-//        System.out.println(responseBody);
-        EntityUtils.consume(entity);
-//      System.out.println("client post: " + (System.currentTimeMillis() - start));
-
-        return statusCode;
+            HttpResponse response = httpClient.execute(httpPost);
+            int statusCode = response.getStatusLine().getStatusCode();
+            HttpEntity entity = response.getEntity();
+            EntityUtils.consume(entity);
+            return statusCode;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return -1;
+        }
     }
 }

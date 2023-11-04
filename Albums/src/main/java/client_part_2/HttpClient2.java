@@ -1,17 +1,14 @@
 package client_part_2;
 
 import client.AlbumClient;
+import net.coobird.thumbnailator.Thumbnails;
 import org.apache.http.client.config.RequestConfig;
-import org.apache.http.config.SocketConfig;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import service_interface.Profile;
 
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.PrintWriter;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.concurrent.ExecutorService;
@@ -30,7 +27,7 @@ public class HttpClient2 {
     private static final int INITIAL_REQUEST_LOOP = 100;
     private static final int ADDITIONAL_REQUEST_LOOP = 1000;
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException {
         if (args.length != NUM_OF_ARGS) {
             System.out.println("Invalid args! " +
                     "Usage: java HttpClientRequestLoads <threadGroupSize> <numThreadGroups> <delay> <IPAddr>");
@@ -63,7 +60,7 @@ public class HttpClient2 {
         ExecutorService executor = Executors.newFixedThreadPool(INITIAL_THREAD_SIZE);
         AlbumClient albumClient = new AlbumClient(httpClient, IPAddr);
         Profile profile = new Profile("Sex Pistols", "Never Mind The Bollocks!", "1977");
-        File imageFile = new File("images/1x1.png");
+        File imageFile = new File("images/nmtb.png");
 
         // initial 10 threads
         for (int i = 0; i < INITIAL_THREAD_SIZE; i++) {
@@ -110,8 +107,9 @@ public class HttpClient2 {
         System.out.println("\nWall Time: " + wallTime + " seconds");
         System.out.println("Num of successful requests: " + numOfSuccessfulRequests);
         System.out.println("Num of failed requests: " + numOfFailedRequests);
-        System.out.println("Throughput: " + throughput + " requests per second");
-        calculateAndDisplayStatistics();
+        System.out.println("Throughput: " + throughput + " requests per second\n");
+        calculateAndDisplayStatistics("POST");
+        calculateAndDisplayStatistics("GET");
     }
 
     public static void performRequests(String requestType, AlbumClient albumClient, File imageFile, Profile profile) {
@@ -169,13 +167,15 @@ public class HttpClient2 {
         }
     }
 
-    private static void calculateAndDisplayStatistics() {
+    private static void calculateAndDisplayStatistics(String requestType) {
         long sum = 0;
         long min = Long.MAX_VALUE, max = Long.MIN_VALUE;
         List<Long> responseTimes = new ArrayList<>();
 
         for (RequestRecord requestRecord : requestRecords) {
-            responseTimes.add(requestRecord.latency);
+            if (requestRecord.requestType.equals(requestType)) {
+                responseTimes.add(requestRecord.latency);
+            }
         }
 
         for (long time : responseTimes) {
@@ -189,6 +189,7 @@ public class HttpClient2 {
         long median = calculateMedian(responseTimes);
         long p99 = calculateP99(responseTimes);
 
+        System.out.println("Statistics for " + requestType + ": ");
         System.out.println("mean response time: " + mean + " millisecs");
         System.out.println("median response time: " + median + " millisecs");
         System.out.println("p99 response time: " + p99 + " millisecs");

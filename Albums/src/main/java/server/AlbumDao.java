@@ -13,8 +13,6 @@ public class AlbumDao {
         this.dataSource = dataSource;
     }
     public ImageMetaData createAlbum(Profile profile, byte[] imageBytes) {
-        long start = System.currentTimeMillis();
-
         String insertAlbum = "INSERT INTO albums (artist, title, year, image) VALUES (?, ?, ?, ?)";
         Connection connection = null;
         PreparedStatement preparedStatement = null;
@@ -36,22 +34,18 @@ public class AlbumDao {
                     String albumID = resultSet.getString(1);
                     String imageSize = String.valueOf(imageBytes.length);
                     ImageMetaData imageMetaData = new ImageMetaData(albumID, imageSize);
-//                    System.out.println("create: " + (System.currentTimeMillis() - start));
-
                     return imageMetaData;
                 }
             }
         } catch (SQLException e) {
             e.printStackTrace();
-        }
-        finally {
+        } finally {
             closeResources(connection, preparedStatement, resultSet);
         }
         return null;
     }
 
     public Profile getAlbum(String albumID) {
-        long start = System.currentTimeMillis();
         String getAlbum = "SELECT artist, title, year FROM albums WHERE albumID = ?";
         Connection connection = null;
         PreparedStatement preparedStatement = null;
@@ -66,8 +60,6 @@ public class AlbumDao {
                 String artist = resultSet.getString("artist");
                 String title = resultSet.getString("title");
                 String year = resultSet.getString("year");
-//                System.out.println("get: " + (System.currentTimeMillis() - start));
-
                 return new Profile(artist, title, year);
             }
         } catch (SQLException e) {
@@ -91,7 +83,7 @@ public class AlbumDao {
                 connection.close();
             }
         } catch (SQLException e) {
-            System.err.println(e.getMessage());
+            e.printStackTrace();
         }
     }
 }
