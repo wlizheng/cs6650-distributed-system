@@ -12,6 +12,7 @@ public class AlbumDao {
     public AlbumDao(HikariDataSource dataSource) {
         this.dataSource = dataSource;
     }
+
     public ImageMetaData createAlbum(Profile profile, byte[] imageBytes) {
         String insertAlbum = "INSERT INTO albums (artist, title, year, image) VALUES (?, ?, ?, ?)";
         Connection connection = null;

@@ -1,7 +1,6 @@
 package client_part_2;
 
 import client.AlbumClient;
-import net.coobird.thumbnailator.Thumbnails;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
@@ -133,7 +132,7 @@ public class HttpClient2 {
 
                 requestRecords.add(new RequestRecord(start, requestType, latency, statusCode));
             } catch (Exception e) {
-//                e.printStackTrace();
+                e.printStackTrace();
                 numOfFailedRequests.incrementAndGet();
                 retryCount++;
             }
