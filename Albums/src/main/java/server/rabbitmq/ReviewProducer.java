@@ -12,7 +12,7 @@ public class ReviewProducer {
 
     public void init() {
         ConnectionFactory factory = new ConnectionFactory();
-        factory.setHost("ec2-35-85-59-79.us-west-2.compute.amazonaws.com");
+        factory.setHost("localhost");
         factory.setPort(5672);
         factory.setUsername("guest");
         factory.setPassword("guest");
