@@ -7,6 +7,8 @@ import java.io.IOException;
 import java.io.PrintWriter;
 
 import com.google.gson.Gson;
+import server.database.AlbumDao;
+import server.database.DatabaseConnection;
 import service_interface.ErrorMsg;
 import service_interface.ImageMetaData;
 import service_interface.Profile;

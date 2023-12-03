@@ -11,4 +11,13 @@
         <servlet-name>AlbumServlet</servlet-name>
         <url-pattern>/albums/*</url-pattern>
     </servlet-mapping>
+
+    <servlet>
+        <servlet-name>ReviewServlet</servlet-name>
+        <servlet-class>server.ReviewServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>ReviewServlet</servlet-name>
+        <url-pattern>/review/*</url-pattern>
+    </servlet-mapping>
 </web-app>
